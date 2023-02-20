@@ -1,27 +1,42 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::mouse::MouseButton;
-use sdl2::pixels::Color;
-use sdl2::rect::{Point, Rect};
-use sdl2::render::{Canvas, Texture, TextureCreator};
-use sdl2::video::{Window, WindowContext};
-use glam::Vec2;
 
-mod pong {
+mod game {
+    use glam::Vec2;
+    use sdl2::pixels::Color;
+    use sdl2::render::WindowCanvas;
+    use sdl2::gfx::primitives::DrawRenderer;
+
+    const SIZE: Vec2 = Vec2 { x: 640.0, y: 640.0 };
+    const BLACK: Color = Color::RGB(0, 0, 0);
+    const RED: Color = Color::RGB(255, 0, 0);
+
     #[derive(Copy, Clone)]
     pub enum State {
         Paused,
         Playing,
     }
 
-    pub struct Pong {
-        state: State
+    pub struct Ball {
+        center: Vec2,
+        velocity: Vec2,
+        radius: f32
     }
 
-    impl Pong {
-        pub fn new() -> Pong {
-            Pong {
-                state: State::Paused,
+    pub struct Game {
+        state: State,
+        ball: Ball
+    }
+
+    impl Game {
+        pub fn new() -> Game {
+            Game {
+                state: State::Playing,
+                ball: Ball {
+                    center: SIZE / 2.0,
+                    velocity: Vec2 { x: 0.0, y: 1.0 },
+                    radius: 10.0
+                }
             }
         }
 
@@ -37,6 +52,18 @@ mod pong {
         }
 
         pub fn update(&mut self) {
+            self.ball.center += self.ball.velocity;
+        }
+
+        pub fn draw(&self, canvas: &mut WindowCanvas) -> Result<(), String> {
+            canvas.set_draw_color(BLACK);
+            canvas.clear();
+            canvas.filled_circle(
+                self.ball.center.x as i16,
+                self.ball.center.y as i16,
+                self.ball.radius as i16,
+                RED
+            )
         }
     }
 }
@@ -59,27 +86,17 @@ pub fn main() -> Result<(), String> {
     // via hardware or software rendering. See CanvasBuilder for more info.
     let mut canvas = window
         .into_canvas()
-        .target_texture()
         .present_vsync()
         .build()
         .map_err(|e| e.to_string())?;
 
     println!("Using SDL_Renderer \"{}\"", canvas.info().name);
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
-    // clears the canvas with the color we set in `set_draw_color`.
-    canvas.clear();
-    // However the canvas has not been updated to the window yet, everything has been processed to
-    // an internal buffer, but if we want our buffer to be displayed on the window, we need to call
-    // `present`. We need to call this everytime we want to render a new frame on the window.
-    canvas.present();
-
-    // this struct manages textures. For lifetime reasons, the canvas cannot directly create
-    // textures, you have to create a `TextureCreator` instead.
-    // let texture_creator: TextureCreator<_> = canvas.texture_creator();
-
-    let mut game = pong::Pong::new();
+    let mut game = game::Game::new();
     let mut event_pump = sdl_context.event_pump()?;
     let mut frame: u32 = 0;
+
+    game.draw(&mut canvas).expect("draw");
+    canvas.present();
     'running: loop {
         // get the inputs here
         for event in event_pump.poll_iter() {
@@ -93,18 +110,12 @@ pub fn main() -> Result<(), String> {
             }
         }
 
-        // update the game loop here
-        if frame >= 3 {
+        if let game::State::Playing = game.state() {
             game.update();
-            frame = 0;
-        }
-
-        canvas.set_draw_color(Color::RGB(0, 0, 0));
-        canvas.clear();
-        canvas.present();
-        if let pong::State::Playing = game.state() {
             frame += 1;
         };
+        game.draw(&mut canvas)?;
+        canvas.present();
     }
 
     Ok(())

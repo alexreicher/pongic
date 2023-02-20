@@ -8,4 +8,4 @@ glam = "0.22.0"
 
 [dependencies.sdl2]
 version = "0.35.2"
-
+features = ["gfx"]

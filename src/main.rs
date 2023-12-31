@@ -101,11 +101,8 @@ pub fn main() -> Result<(), String> {
         // get the inputs here
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => break 'running,
+                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
+                Event::KeyDown { keycode: Some(Keycode::Space), repeat: false, .. } => game.toggle_state(),
                 _ => {}
             }
         }

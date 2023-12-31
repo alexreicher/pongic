@@ -1,78 +1,12 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
-mod game {
-    use glam::Vec2;
-    use rand::Rng;
-    use sdl2::pixels::Color;
-    use sdl2::render::WindowCanvas;
-    use sdl2::gfx::primitives::DrawRenderer;
+mod game;
 
-    const SIZE: Vec2 = Vec2 { x: 640.0, y: 640.0 };
-    const BLACK: Color = Color::RGB(0, 0, 0);
-    const RED: Color = Color::RGB(255, 0, 0);
-
-    #[derive(Copy, Clone)]
-    pub enum State {
-        Paused,
-        Playing,
-    }
-
-    pub struct Ball {
-        center: Vec2,
-        velocity: Vec2,
-        radius: f32
-    }
-
-    pub struct Game {
-        state: State,
-        ball: Ball
-    }
-
-    impl Game {
-        pub fn new() -> Game {
-            let mut rng = rand::thread_rng();
-            let velocity = Vec2 {
-                x: rng.gen_range(-1.0..=1.0),
-                y: rng.gen_range(-1.0..=1.0),
-            }.normalize();
-
-            Game {
-                state: State::Playing,
-                ball: Ball {
-                    center: SIZE / 2.0,
-                    velocity,
-                    radius: 10.0,
-                },
-            }
-        }
-
-        pub fn toggle_state(&mut self) {
-            self.state = match self.state {
-                State::Paused => State::Playing,
-                State::Playing => State::Paused,
-            }
-        }
-
-        pub fn state(&self) -> State {
-            self.state
-        }
-
-        pub fn update(&mut self) {
-            self.ball.center += self.ball.velocity;
-        }
-
-        pub fn draw(&self, canvas: &mut WindowCanvas) -> Result<(), String> {
-            canvas.set_draw_color(BLACK);
-            canvas.clear();
-            canvas.filled_circle(
-                self.ball.center.x as i16,
-                self.ball.center.y as i16,
-                self.ball.radius as i16,
-                RED
-            )
-        }
-    }
+#[derive(Copy, Clone, PartialEq)]
+enum State {
+    Paused,
+    Playing,
 }
 
 pub fn main() -> Result<(), String> {
@@ -100,6 +34,7 @@ pub fn main() -> Result<(), String> {
     println!("Using SDL_Renderer \"{}\"", canvas.info().name);
     let mut game = game::Game::new();
     let mut event_pump = sdl_context.event_pump()?;
+    let mut state: State = State::Playing;
     'running: loop {
         game.draw(&mut canvas).expect("draw");
         canvas.present();
@@ -107,12 +42,25 @@ pub fn main() -> Result<(), String> {
         // get the inputs here
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'running,
-                Event::KeyDown { keycode: Some(Keycode::Space), repeat: false, .. } => game.toggle_state(),
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => break 'running,
+                Event::KeyDown {
+                    keycode: Some(Keycode::Space),
+                    repeat: false,
+                    ..
+                } => {
+                    state = match state {
+                        State::Paused => State::Playing,
+                        State::Playing => State::Paused,
+                    }
+                }
                 _ => {}
             }
         }
-        if let game::State::Playing = game.state() {
+        if state == State::Playing {
             game.update();
         };
     }

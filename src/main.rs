@@ -3,6 +3,7 @@ use sdl2::keyboard::Keycode;
 
 mod game {
     use glam::Vec2;
+    use rand::Rng;
     use sdl2::pixels::Color;
     use sdl2::render::WindowCanvas;
     use sdl2::gfx::primitives::DrawRenderer;
@@ -30,13 +31,19 @@ mod game {
 
     impl Game {
         pub fn new() -> Game {
+            let mut rng = rand::thread_rng();
+            let velocity = Vec2 {
+                x: rng.gen_range(-1.0..=1.0),
+                y: rng.gen_range(-1.0..=1.0),
+            }.normalize();
+
             Game {
                 state: State::Playing,
                 ball: Ball {
                     center: SIZE / 2.0,
-                    velocity: Vec2 { x: 0.0, y: 1.0 },
-                    radius: 10.0
-                }
+                    velocity,
+                    radius: 10.0,
+                },
             }
         }
 
@@ -93,11 +100,10 @@ pub fn main() -> Result<(), String> {
     println!("Using SDL_Renderer \"{}\"", canvas.info().name);
     let mut game = game::Game::new();
     let mut event_pump = sdl_context.event_pump()?;
-    let mut frame: u32 = 0;
-
-    game.draw(&mut canvas).expect("draw");
-    canvas.present();
     'running: loop {
+        game.draw(&mut canvas).expect("draw");
+        canvas.present();
+
         // get the inputs here
         for event in event_pump.poll_iter() {
             match event {
@@ -106,13 +112,9 @@ pub fn main() -> Result<(), String> {
                 _ => {}
             }
         }
-
         if let game::State::Playing = game.state() {
             game.update();
-            frame += 1;
         };
-        game.draw(&mut canvas)?;
-        canvas.present();
     }
 
     Ok(())

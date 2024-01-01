@@ -18,7 +18,7 @@ pub fn main() -> Result<(), String> {
     // fullscreen, ... but you cannot change its content without using a Canvas or using the
     // `surface()` method.
     let window = video_subsystem
-        .window("Pong", 640, 640)
+        .window("Pong", game::SIZE.x as u32, game::SIZE.y as u32)
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;

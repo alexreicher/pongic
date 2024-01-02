@@ -23,6 +23,7 @@ struct Ball {
 struct Paddle {
     bounding_box: BoundingBox,
     velocity: Vec2,
+    normal: Vec2,
     color: Color
 }
 
@@ -87,6 +88,7 @@ impl Game {
                         bottom_right: Vec2 { x: PADDLE_GAP + PADDLE_WIDTH, y: (SIZE.y + PADDLE_LENGTH) / 2.0 },
                     },
                     velocity: Vec2 { x: 0.0, y: 0.0 },
+                    normal: Vec2 { x: 1.0, y: 0.0 },
                     color: Color::CYAN
                 },
                 Paddle {
@@ -95,6 +97,7 @@ impl Game {
                         bottom_right: Vec2 { x: SIZE.x - PADDLE_GAP, y: (SIZE.y + PADDLE_LENGTH) / 2.0 },
                     },
                     velocity: Vec2 { x: 0.0, y: 0.0 },
+                    normal: Vec2 { x: -1.0, y: 0.0 },
                     color: Color::MAGENTA
                 },
             ]
@@ -116,7 +119,7 @@ impl Game {
         self.ball.bounding_box.bounds_collision(&mut self.ball.velocity);
         for paddle in &mut self.paddles {
             paddle.bounding_box.bounds_collision(&mut paddle.velocity);
-            if self.ball.bounding_box.intersects(&paddle.bounding_box) {
+            if self.ball.bounding_box.intersects(&paddle.bounding_box) && self.ball.velocity.dot(paddle.normal) < 0.0 {
                 self.ball.velocity.x = -self.ball.velocity.x;
             }
         }

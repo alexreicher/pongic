@@ -3,12 +3,6 @@ use sdl2::keyboard::Keycode;
 
 mod game;
 
-#[derive(Copy, Clone, PartialEq)]
-enum State {
-    Paused,
-    Playing,
-}
-
 pub fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -34,12 +28,9 @@ pub fn main() -> Result<(), String> {
     println!("Using SDL_Renderer \"{}\"", canvas.info().name);
     let mut game = game::Game::new();
     let mut event_pump = sdl_context.event_pump()?;
-    let mut state: State = State::Playing;
     'running: loop {
         game.draw(&mut canvas).expect("draw");
-        canvas.present();
 
-        // get the inputs here
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -52,10 +43,7 @@ pub fn main() -> Result<(), String> {
                     repeat: false,
                     ..
                 } => {
-                    state = match state {
-                        State::Paused => State::Playing,
-                        State::Playing => State::Paused,
-                    }
+                    game.toggle_pause();
                 },
                 Event::KeyDown {
                     keycode: Some(Keycode::A),
@@ -84,9 +72,8 @@ pub fn main() -> Result<(), String> {
                 _ => {}
             }
         }
-        if state == State::Playing {
-            game.update();
-        };
+
+        game.update();
     }
 
     Ok(())

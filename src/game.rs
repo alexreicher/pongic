@@ -126,6 +126,10 @@ impl Game {
     }
 
     pub fn draw(&self, canvas: &mut WindowCanvas) -> Result<(), String> {
+        // Clear screen
+        canvas.set_draw_color(Color::BLACK);
+        canvas.clear();
+
         // Draw ball
         canvas.filled_circle(
             (self.ball.bounding_box.top_left.x + self.ball.radius) as i16,
@@ -145,7 +149,6 @@ impl Game {
             ))?;
         }
 
-        canvas.present();
         Ok(())
     }
 }

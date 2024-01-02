@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-glam = "0.22.0"
-rand = "0.8.5"
+glam = ">=0.22"
+rand = ">=0.8.5"
 
 [dependencies.sdl2]
-version = "0.35.2"
+version = ">=0.35"
 features = ["gfx"]

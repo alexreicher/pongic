@@ -7,11 +7,12 @@ use sdl2::gfx::primitives::DrawRenderer;
 pub const SIZE: Vec2 = Vec2 { x: 800.0, y: 600.0 };
 
 const NUM_PLAYERS: usize = 2;
-const PADDLE_GAP: f32 = 30.0;
+const PADDLE_GAP: f32 = 0.0;
 const PADDLE_WIDTH: f32 = 30.0;
 const PADDLE_LENGTH: f32 = 100.0;
 const BALL_RADIUS: f32 = 15.0;
 const BALL_VELOCITY: f32 = 5.0;
+const PADDLE_FRICTION: f32 = 5e-3;
 
 struct Ball {
     bounding_box: BoundingBox,
@@ -113,6 +114,7 @@ impl Game {
         self.ball.bounding_box.move_by(self.ball.velocity);
         for paddle in &mut self.paddles {
             paddle.bounding_box.move_by(paddle.velocity);
+            paddle.velocity.y -= paddle.velocity.y.signum() * PADDLE_FRICTION;
         }
 
         // Check for collisions

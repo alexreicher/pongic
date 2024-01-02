@@ -10,6 +10,8 @@ const NUM_PLAYERS: usize = 2;
 const PADDLE_GAP: f32 = 30.0;
 const PADDLE_WIDTH: f32 = 30.0;
 const PADDLE_LENGTH: f32 = 100.0;
+const BALL_RADIUS: f32 = 15.0;
+const BALL_VELOCITY: f32 = 5.0;
 
 struct Ball {
     bounding_box: BoundingBox,
@@ -41,6 +43,21 @@ impl BoundingBox {
         self.top_left += delta;
         self.bottom_right += delta;
     }
+
+    fn bounds_collision(&self, velocity: &mut Vec2) {
+        if self.top_left.x < 0.0 {
+            velocity.x = -velocity.x;
+        }
+        if self.bottom_right.x > SIZE.x {
+            velocity.x = -velocity.x;
+        }
+        if self.top_left.y < 0.0 {
+            velocity.y = -velocity.y;
+        }
+        if self.bottom_right.y > SIZE.y {
+            velocity.y = -velocity.y;
+        }
+    }
 }
 
 pub struct Game {
@@ -52,23 +69,18 @@ impl Game {
     pub fn new() -> Game {
         let mut rng = rand::thread_rng();
         let angle = rng.gen_range(0.0..=std::f32::consts::TAU);
-        let velocity = Vec2 {
-            x: angle.cos(),
-            y: angle.sin(),
-        } * 5.0;
-
         Game {
             ball: Ball {
                 bounding_box: BoundingBox {
-                    top_left: Vec2 { x: SIZE.x / 2.0, y: SIZE.y / 2.0 },
-                    bottom_right: Vec2 { x: SIZE.x / 2.0, y: SIZE.y / 2.0 },
+                    top_left: SIZE / 2.0 - Vec2 { x: BALL_RADIUS, y: BALL_RADIUS },
+                    bottom_right: SIZE / 2.0 + Vec2 { x: BALL_RADIUS, y: BALL_RADIUS },
                 },
-                velocity,
-                radius: 10.0,
-                color: Color::WHITE
+                velocity: Vec2 { x: angle.cos(), y: angle.sin() } * BALL_VELOCITY,
+                radius: BALL_RADIUS,
+                color: Color::YELLOW
             },
             paddles: [
-                // TODO: get rid of magic numbers and duplicate code
+                // TODO: get rid of duplicate code
                 Paddle {
                     bounding_box: BoundingBox {
                         top_left: Vec2 { x: PADDLE_GAP, y: (SIZE.y - PADDLE_LENGTH) / 2.0 },
@@ -89,21 +101,21 @@ impl Game {
         }
     }
 
+    pub fn accelerate_paddle(&mut self, player: usize, delta: f32) {
+        self.paddles[player].velocity.y += delta;
+    }
+
     pub fn update(&mut self) {
+        // Move game objects
         self.ball.bounding_box.move_by(self.ball.velocity);
-        if self.ball.bounding_box.top_left.x - self.ball.radius < 0.0 {
-            self.ball.velocity.x = -self.ball.velocity.x;
+        for paddle in &mut self.paddles {
+            paddle.bounding_box.move_by(paddle.velocity);
         }
-        if self.ball.bounding_box.bottom_right.x + self.ball.radius > SIZE.x {
-            self.ball.velocity.x = -self.ball.velocity.x;
-        }
-        if self.ball.bounding_box.top_left.y - self.ball.radius < 0.0 {
-            self.ball.velocity.y = -self.ball.velocity.y;
-        }
-        if self.ball.bounding_box.bottom_right.y + self.ball.radius > SIZE.y {
-            self.ball.velocity.y = -self.ball.velocity.y;
-        }
-        for paddle in &self.paddles {
+
+        // Check for collisions
+        self.ball.bounding_box.bounds_collision(&mut self.ball.velocity);
+        for paddle in &mut self.paddles {
+            paddle.bounding_box.bounds_collision(&mut paddle.velocity);
             if self.ball.bounding_box.intersects(&paddle.bounding_box) {
                 self.ball.velocity.x = -self.ball.velocity.x;
             }
@@ -113,8 +125,8 @@ impl Game {
     pub fn draw(&self, canvas: &mut WindowCanvas) -> Result<(), String> {
         // Draw ball
         canvas.filled_circle(
-            (self.ball.bounding_box.top_left.x - self.ball.radius) as i16,
-            (self.ball.bounding_box.top_left.y - self.ball.radius) as i16,
+            (self.ball.bounding_box.top_left.x + self.ball.radius) as i16,
+            (self.ball.bounding_box.top_left.y + self.ball.radius) as i16,
             self.ball.radius as i16,
             self.ball.color
         )?;

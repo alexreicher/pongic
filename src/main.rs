@@ -56,7 +56,31 @@ pub fn main() -> Result<(), String> {
                         State::Paused => State::Playing,
                         State::Playing => State::Paused,
                     }
-                }
+                },
+                Event::KeyDown {
+                    keycode: Some(Keycode::A),
+                    ..
+                } => {
+                    game.accelerate_paddle(0, -1.0);
+                },
+                Event::KeyDown {
+                    keycode: Some(Keycode::Z),
+                    ..
+                } => {
+                    game.accelerate_paddle(0, 1.0);
+                },
+                Event::KeyDown {
+                    keycode: Some(Keycode::K),
+                    ..
+                } => {
+                    game.accelerate_paddle(1, -1.0);
+                },
+                Event::KeyDown {
+                    keycode: Some(Keycode::M),
+                    ..
+                } => {
+                    game.accelerate_paddle(1, 1.0);
+                },
                 _ => {}
             }
         }

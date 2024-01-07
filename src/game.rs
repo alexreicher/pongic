@@ -48,11 +48,13 @@ pub struct Game {
     paddles: [Paddle; NUM_PLAYERS]
 }
 
+pub type PlayerId = u8;
+
 #[derive(Copy, Clone)]
 pub enum Command {
     Pause,
-    Accelerate(usize, f32),
-    Slow(usize)
+    Accelerate(PlayerId, f32),
+    Slow(PlayerId)
 }
 
 impl BoundingBox {
@@ -154,12 +156,12 @@ impl Game {
         }
     }
 
-    fn accelerate(&mut self, player: usize, signum: f32) {
-        self.paddles[player].velocity.y += PADDLE_ACCELERATION * signum;
+    fn accelerate(&mut self, player: PlayerId, signum: f32) {
+        self.paddles[player as usize].velocity.y += PADDLE_ACCELERATION * signum;
     }
 
-    fn slow(&mut self, player: usize) {
-        self.paddles[player].velocity.y *= 0.75;
+    fn slow(&mut self, player: PlayerId) {
+        self.paddles[player as usize].velocity.y *= 0.75;
     }
 
     pub fn update(&mut self) {

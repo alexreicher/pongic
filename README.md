@@ -1,33 +1,35 @@
-# Pong Game
+# Pongic
 
-This is a very simple implementation inspired by the classic Pong game, written in Rust using the SDL2 library.
+A game inspired by the classic Pong game, written in Rust using the SDL2 library.
 
-## Installation
+## Development
+
+1. Install SDL2 development files:
+
+   1. On Ubuntu:
+        ```
+        sudo apt install libsdl2-dev libsdl2-gfx-dev
+        ```
+
+   1. On macOS:
+        ```
+        brew install SDL2 SDL2_gfx
+        ```
 
 1. Clone the repository:
         ```
-        git clone https://github.com/alexreicher/pong.git
+        git clone https://github.com/alexreicher/pongic.git
         ```
 
-2. Navigate to the project directory:
+1. Navigate to the project directory:
         ```
-        cd pong
-        ```
-
-3. Build:
-        ```
-        cargo build -r
+        cd pongic
         ```
 
-## Controls
-
-- Player 1:
-    - Move up: A key
-    - Move down: Z key
-
-- Player 2:
-    - Move up: K key
-    - Move down: M key
+1. Build and run the release build:
+        ```
+        cargo run -r
+        ```
 
 ## License
 

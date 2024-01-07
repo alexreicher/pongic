@@ -31,24 +31,28 @@ struct Paddle {
     color: Color
 }
 
-impl Paddle {
-    fn move_by(&mut self, delta: Vec2) {
-        self.bounding_box.move_by(delta);
-    }
-
-    fn expand_by(&mut self, delta: f32) {
-        self.bounding_box.top_left.y -= delta / 2.0;
-        self.bounding_box.bottom_right.y += delta / 2.0;
-    }
-
-    fn length(&self) -> f32 {
-        self.bounding_box.bottom_right.y - self.bounding_box.top_left.y
-    }
+#[derive(Copy, Clone, PartialEq)]
+enum State {
+    Paused,
+    Playing,
+    Victory(usize)
 }
 
 struct BoundingBox {
     top_left: Vec2,
     bottom_right: Vec2
+}
+pub struct Game {
+    state: State,
+    ball: Ball,
+    paddles: [Paddle; NUM_PLAYERS]
+}
+
+#[derive(Copy, Clone)]
+pub enum Command {
+    Pause,
+    Accelerate(usize, f32),
+    Slow(usize)
 }
 
 impl BoundingBox {
@@ -80,17 +84,19 @@ impl BoundingBox {
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
-pub enum State {
-    Paused,
-    Playing,
-    Victory(usize)
-}
+impl Paddle {
+    fn move_by(&mut self, delta: Vec2) {
+        self.bounding_box.move_by(delta);
+    }
 
-pub struct Game {
-    state: State,
-    ball: Ball,
-    paddles: [Paddle; NUM_PLAYERS]
+    fn expand_by(&mut self, delta: f32) {
+        self.bounding_box.top_left.y -= delta / 2.0;
+        self.bounding_box.bottom_right.y += delta / 2.0;
+    }
+
+    fn length(&self) -> f32 {
+        self.bounding_box.bottom_right.y - self.bounding_box.top_left.y
+    }
 }
 
 impl Game {
@@ -117,7 +123,7 @@ impl Game {
                     },
                     velocity: Vec2 { x: 0.0, y: 0.0 },
                     normal: Vec2 { x: 1.0, y: 0.0 },
-                    color: Color::CYAN
+                    color: Color::GREEN
                 },
                 Paddle {
                     bounding_box: BoundingBox {
@@ -126,13 +132,21 @@ impl Game {
                     },
                     velocity: Vec2 { x: 0.0, y: 0.0 },
                     normal: Vec2 { x: -1.0, y: 0.0 },
-                    color: Color::MAGENTA
+                    color: Color::BLUE
                 },
             ]
         }
     }
 
-    pub fn toggle_pause(&mut self) {
+    pub fn handle_command(&mut self, command: Command) {
+        match command {
+            Command::Pause => self.toggle_pause(),
+            Command::Accelerate(player, signum) => self.accelerate(player, signum),
+            Command::Slow(player) => self.slow(player)
+        }
+    }
+
+    fn toggle_pause(&mut self) {
         match self.state {
             State::Paused => self.state = State::Playing,
             State::Playing => self.state = State::Paused,
@@ -140,8 +154,12 @@ impl Game {
         }
     }
 
-    pub fn accelerate_paddle(&mut self, player: usize, signum: f32) {
+    fn accelerate(&mut self, player: usize, signum: f32) {
         self.paddles[player].velocity.y += PADDLE_ACCELERATION * signum;
+    }
+
+    fn slow(&mut self, player: usize) {
+        self.paddles[player].velocity.y *= 0.75;
     }
 
     pub fn update(&mut self) {
@@ -154,7 +172,7 @@ impl Game {
         for paddle in &mut self.paddles {
             paddle.move_by(paddle.velocity);
             paddle.velocity.y -= paddle.velocity.y.signum() * PADDLE_FRICTION;
-            paddle.expand_by(PADDLE_DECAY);
+            paddle.expand_by(-PADDLE_DECAY);
         }
 
         // Check for collisions

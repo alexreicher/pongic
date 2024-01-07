@@ -1,5 +1,4 @@
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
+use sdl2::{event::Event, keyboard::Keycode};
 
 mod game;
 
@@ -43,31 +42,15 @@ pub fn main() -> Result<(), String> {
                     repeat: false,
                     ..
                 } => {
-                    game.toggle_pause();
+                    game.handle_command(game::Command::Pause);
                 },
                 Event::KeyDown {
-                    keycode: Some(Keycode::A),
+                    keycode: Some(keycode),
                     ..
                 } => {
-                    game.accelerate_paddle(0, -1.0);
-                },
-                Event::KeyDown {
-                    keycode: Some(Keycode::Z),
-                    ..
-                } => {
-                    game.accelerate_paddle(0, 1.0);
-                },
-                Event::KeyDown {
-                    keycode: Some(Keycode::K),
-                    ..
-                } => {
-                    game.accelerate_paddle(1, -1.0);
-                },
-                Event::KeyDown {
-                    keycode: Some(Keycode::M),
-                    ..
-                } => {
-                    game.accelerate_paddle(1, 1.0);
+                    if let Some(command) = keycode_to_command(keycode) {
+                        game.handle_command(command);
+                    }
                 },
                 _ => {}
             }
@@ -77,4 +60,16 @@ pub fn main() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+fn keycode_to_command(keycode: Keycode) -> Option<game::Command> {
+    match keycode {
+        Keycode::A => Some(game::Command::Accelerate(0, -1.0)),
+        Keycode::Z => Some(game::Command::Accelerate(0, 1.0)),
+        Keycode::S => Some(game::Command::Slow(0)),
+        Keycode::K => Some(game::Command::Accelerate(1, -1.0)),
+        Keycode::M => Some(game::Command::Accelerate(1, 1.0)),
+        Keycode::J => Some(game::Command::Slow(1)),
+        _ => None,
+    }
 }
